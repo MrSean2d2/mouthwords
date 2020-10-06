@@ -1,0 +1,8 @@
+# Test files
+*.mp4
+*.txt
+
+# Environment folders
+speechenv/
+.vscode/
+__pycache__/
