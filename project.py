@@ -1,5 +1,7 @@
 #! /usr/bin/env python3
 
+# TODO Revise search method, it seems to be flawed
+
 from vosk import Model, KaldiRecognizer, SetLogLevel
 import sys
 import os
@@ -9,6 +11,25 @@ import json
 import argparse
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 
+parser = argparse.ArgumentParser()
+group = parser.add_mutually_exclusive_group(required=True)
+group.add_argument("-wf", "--wordfile", help="A text file containing words you want to search for")
+group.add_argument("-w", "--word", help="The word you want to search for")
+parser.add_argument("files", nargs="+", help="MPEG4 files to search through")
+args = parser.parse_args()
+words = []
+words_immutable = []
+total_found_words = []
+if args.wordfile:
+        with open(args.wordfile, "r") as wordfilestring:
+            for line in wordfilestring:
+                for lyric in line.split():
+                    words.append(lyric)
+                    words_immutable.append(lyric)
+elif args.word:
+    words.append(args.word)
+    words_immutable.append(args.word)
+
 def cut_and_paste(dataList):
     clips = []
     for data in dataList:
@@ -16,7 +37,7 @@ def cut_and_paste(dataList):
         clips.append(clip)
 
     final_clip = concatenate_videoclips(clips)
-    final_clip.write_videofile(f"{sys.argv[0]}_output.mp4", audio=True)
+    final_clip.write_videofile(f"output.mp4", audio=True)
     for clip in clips:
         clip.close()
 
@@ -24,35 +45,25 @@ def cut_and_paste(dataList):
 
 
 def search(dataList, speechFile):
-    words = []
     word_data = []
-    if args.wordfile:
-        with open(args.wordfile, "r") as wordfilestring:
-            for line in wordfilestring:
-                for lyric in line.split():
-                    words.append(lyric)
-        print(words)
-    elif args.word:
-        words.append(args.word)
-        print(words)
-    for word in words:
-        print(f"Searching for {word}")
-        for data in dataList:
-            for i in data["result"]:
+    for data in dataList:
+        for i in data["result"]:
+            for word in words:
                 if i["word"] == word:
                     print(f"{word}: File: {speechFile} Start (s): {i['start']}")
                     print(f"{word}: File: {speechFile} End (s): {i['end']}")
                     i.update({"file": speechFile})
+                    words.remove(word)
                     word_data.append(i)
                     break
-            break
-
+            
+    print(word_data)
     return word_data
             
 
 def speech_recog_and_search(fileIn):
     datalist = []
-    SetLogLevel(-1)
+    SetLogLevel(0)
 
     if not os.path.exists("model"):
         print("Please download the model from https://alphacephei.com/vosk/models and unpack as 'model' in the current folder.")
@@ -77,28 +88,21 @@ def speech_recog_and_search(fileIn):
         if len(data) == 0:
             break
         if rec.AcceptWaveform(data):
-            stuff = json.loads(rec.Result())
-            datalist.append(stuff)
-        else:
-            pass
+            datalist.append(json.loads(rec.Result()))
+
+    datalist.append(json.loads(rec.FinalResult()))
     found_words = search(datalist, fileIn)
     return found_words
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("-wf", "--wordfile", help="A text file containing words you want to search for")
-    group.add_argument("-w", "--word", help="The word you want to search for")
-    parser.add_argument("files", nargs="+", help="MPEG4 files to search through")
-    global args
-    args = parser.parse_args()
-    total_found_words = []
-    for file in args.files:
-        found_words = speech_recog_and_search(file)
-        total_found_words.extend(found_words)
+for file in args.files:
+    print(f"Searching for words in {file}\nThis may take a while, please be patient...")
+    found_words = speech_recog_and_search(file)
+    total_found_words.extend(found_words)
+if total_found_words == []:
+    print(f"{sys.argv[0]} did not find any words!", file=sys.stderr)
+else:
+    total_found_words.sort(key=lambda i: words_immutable.index(i["word"]))
     print(total_found_words)
     cut_and_paste(total_found_words)
-    
 
-main()
