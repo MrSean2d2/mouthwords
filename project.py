@@ -1,6 +1,9 @@
 #! /usr/bin/env python3
 
-# TODO Revise search method, it seems to be flawed
+# TODO Implement writing and reading from JSON files to avoid having to run the lengthy 
+# speech recognition process more often than necessary
+
+# TODO Add a check for framerate problems or somehow support differing framerates in videos
 
 from vosk import Model, KaldiRecognizer, SetLogLevel
 import sys
@@ -12,10 +15,8 @@ import argparse
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 
 parser = argparse.ArgumentParser()
-group = parser.add_mutually_exclusive_group(required=True)
-group.add_argument("-wf", "--wordfile", help="A text file containing words you want to search for")
-group.add_argument("-w", "--word", help="The word you want to search for")
-parser.add_argument("files", nargs="+", help="MPEG4 files to search through")
+parser.add_argument("wordfile", help="Text file of words to search for")
+parser.add_argument("files", nargs="+", help="MPEG4 files to search through - THESE MUST BE THE SAME FRAMERATE!")
 args = parser.parse_args()
 words = []
 words_immutable = []
@@ -33,7 +34,9 @@ elif args.word:
 def cut_and_paste(dataList):
     clips = []
     for data in dataList:
-        clip = VideoFileClip(data["file"]).subclip(data["start"], data["end"])
+        start = data["start"] - 0.01
+        end = data["end"] + 0.01
+        clip = VideoFileClip(data["file"]).subclip(start, end)
         clips.append(clip)
 
     final_clip = concatenate_videoclips(clips)
@@ -47,15 +50,16 @@ def cut_and_paste(dataList):
 def search(dataList, speechFile):
     word_data = []
     for data in dataList:
-        for i in data["result"]:
-            for word in words:
-                if i["word"] == word:
-                    print(f"{word}: File: {speechFile} Start (s): {i['start']}")
-                    print(f"{word}: File: {speechFile} End (s): {i['end']}")
-                    i.update({"file": speechFile})
-                    words.remove(word)
-                    word_data.append(i)
-                    break
+        if "result" in data:
+            for i in data["result"]:
+                for word in words:
+                    if i["word"] == word:
+                        print(f"{word}: File: {speechFile} Start (s): {i['start']}")
+                        print(f"{word}: File: {speechFile} End (s): {i['end']}")
+                        i.update({"file": speechFile})
+                        words.remove(word)
+                        word_data.append(i)
+                        break
             
     print(word_data)
     return word_data
@@ -99,6 +103,8 @@ for file in args.files:
     print(f"Searching for words in {file}\nThis may take a while, please be patient...")
     found_words = speech_recog_and_search(file)
     total_found_words.extend(found_words)
+
+
 if total_found_words == []:
     print(f"{sys.argv[0]} did not find any words!", file=sys.stderr)
 else:
