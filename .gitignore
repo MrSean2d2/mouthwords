@@ -6,3 +6,6 @@
 speechenv/
 .vscode/
 __pycache__/
+
+# Model folder (indpendent of the code)
+model/
