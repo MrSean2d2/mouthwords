@@ -1,6 +1,10 @@
 #! /usr/bin/env python3
 
+<<<<<<< HEAD
 # mouthwords - a script to put words in other people's mouths
+=======
+# mouthwords - a script to make people say what you want
+>>>>>>> e16e183960070c07f05d530567b16bf66d3f7838
 # Copyright © 2020 Sean Reitsma
 
 # Licensed under the Apache License, Version 2.0 (the "License");
