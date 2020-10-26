@@ -1,6 +1,7 @@
 # Test files
 *.mp4
 *.txt
+*.json
 
 # Environment folders
 speechenv/
