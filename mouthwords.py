@@ -1,6 +1,8 @@
 #! /usr/bin/env python3
 
+
 # mouthwords - a script to put words in other people's mouths
+
 # Copyright © 2020 Sean Reitsma
 
 # Licensed under the Apache License, Version 2.0 (the "License");
