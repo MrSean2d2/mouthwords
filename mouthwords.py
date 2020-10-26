@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-# project.py (untitled) - a script to make famous people say what you want
+# mouthwords - a script to make people say what you want
 # Copyright © 2020 Sean Reitsma
 
 # Licensed under the Apache License, Version 2.0 (the "License");
