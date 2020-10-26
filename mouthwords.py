@@ -34,8 +34,9 @@ import argparse
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-w", "--writejson", help="Write transcript to a JSON file", action="store_true")
-parser.add_argument("-r", "--readjson", help="Read from JSON transcript", action="store_true")
+group = parser.add_mutually_exclusive_group()
+group.add_argument("-w", "--writejson", help="Write transcript to a JSON file", action="store_true")
+group.add_argument("-r", "--readjson", help="Read from JSON transcript", action="store_true")
 parser.add_argument("wordfile", help="Text file of words to search for")
 parser.add_argument("files", nargs="+", help="MPEG4 files (all with the same fps!) or JSON transcripts to search through")
 args = parser.parse_args()
