@@ -33,7 +33,7 @@ import json
 import argparse
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(description="A script to put words in other people's mouths", usage="%(prog)s [OPTIONS] [WORDFILE] [FILES...]")
 group = parser.add_mutually_exclusive_group()
 group.add_argument("-w", "--writejson", help="Write transcript to a JSON file", action="store_true")
 group.add_argument("-r", "--readjson", help="Read from JSON transcript", action="store_true")
