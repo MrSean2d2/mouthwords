@@ -43,6 +43,7 @@ args = parser.parse_args()
 words = []
 words_immutable = []
 total_found_words = []
+datalist = []
 with open(args.wordfile, "r") as wordfilestring:
     for line in wordfilestring:
         for lyric in line.split():
@@ -76,7 +77,6 @@ def search(datalist, speechFile):
                     if i["word"] == word:
                         print(f"{word}: File: {speechFile} Start (s): {i['start']}")
                         print(f"{word}: File: {speechFile} End (s): {i['end']}")
-                        i.update({"file": speechFile})
                         words.remove(word)
                         word_data.append(i)
                         break
@@ -86,7 +86,6 @@ def search(datalist, speechFile):
             
 
 def speech_recog_and_search(fileIn):
-    datalist = []
     SetLogLevel(0)
 
     if not os.path.exists("model"):
@@ -117,8 +116,12 @@ def speech_recog_and_search(fileIn):
 
     finalResult = rec.FinalResult()
     datalist.append(json.loads(finalResult))
+    for entry in datalist:
+        if "result" in entry:
+            for stuff in entry["result"]:
+                stuff.update({"file": fileIn})
     if args.writejson:
-        with open("test.json", "w") as outputJson:
+        with open(f"{fileIn}.json", "a") as outputJson:
             outputJson.write(json.dumps(datalist))
     found_words = search(datalist, fileIn)
     return found_words
