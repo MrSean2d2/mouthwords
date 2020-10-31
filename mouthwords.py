@@ -17,9 +17,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# TODO Implement writing and reading from JSON files to avoid having to run the lengthy 
-# speech recognition process more often than necessary
-
 # TODO Add a check for framerate problems or somehow support differing framerates in videos
 
 # TODO Fix list ordering to allow for duplicate words
@@ -43,7 +40,7 @@ args = parser.parse_args()
 words = []
 words_immutable = []
 total_found_words = []
-datalist = []
+
 with open(args.wordfile, "r") as wordfilestring:
     for line in wordfilestring:
         for lyric in line.split():
@@ -53,6 +50,7 @@ with open(args.wordfile, "r") as wordfilestring:
 
 
 def cut_and_paste(datalist):
+    print(datalist)
     clips = []
     for data in datalist:
         start = data["start"] - 0.01
@@ -81,11 +79,11 @@ def search(datalist, speechFile):
                         word_data.append(i)
                         break
             
-    print(word_data)
     return word_data
             
 
 def speech_recog_and_search(fileIn):
+    datalist = []
     SetLogLevel(0)
 
     if not os.path.exists("model"):
@@ -116,12 +114,13 @@ def speech_recog_and_search(fileIn):
 
     finalResult = rec.FinalResult()
     datalist.append(json.loads(finalResult))
+    print(fileIn)
     for entry in datalist:
         if "result" in entry:
             for stuff in entry["result"]:
                 stuff.update({"file": fileIn})
     if args.writejson:
-        with open(f"{fileIn}.json", "a") as outputJson:
+        with open(os.path.splitext(fileIn)[0] + ".json", "w") as outputJson:
             outputJson.write(json.dumps(datalist))
     found_words = search(datalist, fileIn)
     return found_words
