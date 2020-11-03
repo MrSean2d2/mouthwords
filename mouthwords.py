@@ -50,7 +50,6 @@ with open(args.wordfile, "r") as wordfilestring:
 
 
 def cut_and_paste(datalist):
-    print(datalist)
     clips = []
     for data in datalist:
         start = data["start"] - 0.01
