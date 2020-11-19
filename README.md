@@ -21,7 +21,7 @@ but if you are on Linux® be sure to check if there is a package in your distro'
 
 # Usage
 
-'''
+```
 
 usage: mouthwords.py [OPTIONS] [WORDFILE] [FILES...]
 
@@ -36,7 +36,7 @@ optional arguments:
   -w, --writejson  Write transcript to a JSON file
   -r, --readjson   Read from JSON transcript
 
-'''
+```
 
 When using .mp4 files make sure they are all the same framerate otherwise when MoviePy concatenates the clips
 you end up with funky video.
