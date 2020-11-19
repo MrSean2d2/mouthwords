@@ -29,9 +29,11 @@ import subprocess
 import json
 import argparse
 from moviepy.editor import VideoFileClip, concatenate_videoclips
+import uuid
 
 parser = argparse.ArgumentParser(description="A script to put words in other people's mouths", usage="%(prog)s [OPTIONS] [WORDFILE] [FILES...]")
 group = parser.add_mutually_exclusive_group()
+
 group.add_argument("-w", "--writejson", help="Write transcript to a JSON file", action="store_true")
 group.add_argument("-r", "--readjson", help="Read from JSON transcript", action="store_true")
 parser.add_argument("wordfile", help="Text file of words to search for")
@@ -41,20 +43,45 @@ words = []
 words_immutable = []
 total_found_words = []
 
+class Word:
+   
+    def __init__(self, conf, start, end, word, fileIn):
+        self.conf = conf
+        self.start = start
+        self.end = end
+        self.word = word
+        self.file = fileIn
+        self.uuid = uuid.uuid4()
+
+
+
+    # TODO method to write json from object data
+
+        
 with open(args.wordfile, "r") as wordfilestring:
     for line in wordfilestring:
-        for lyric in line.split():
-            words.append(lyric)
-            words_immutable.append(lyric)
+        for word in line.split():
+            words.append(word)
+            words_immutable.append(word)
+
+def wordsFromList(datalist):
+    export_list = []
+    for data in datalist:
+        if "result" in data:
+            for i in data["result"]:
+                word = Word(i["conf"], i["start"], i["end"], i["word"], i["file"])
+                export_list.append(word)
+
+    return export_list
 
 
 
-def cut_and_paste(datalist):
+def cutAndPaste(datalist):
     clips = []
     for data in datalist:
-        start = data["start"] - 0.01
-        end = data["end"] + 0.01
-        clip = VideoFileClip(data["file"]).subclip(start, end)
+        start = data.start - 0.01
+        end = data.end + 0.01
+        clip = VideoFileClip(data.file).subclip(start, end)
         clips.append(clip)
 
     final_clip = concatenate_videoclips(clips)
@@ -65,23 +92,21 @@ def cut_and_paste(datalist):
         
 
 
-def search(datalist, speechFile):
+def search(wordlist):
     word_data = []
-    for data in datalist:
-        if "result" in data:
-            for i in data["result"]:
-                for word in words:
-                    if i["word"] == word:
-                        print(f"{word}: File: {speechFile} Start (s): {i['start']}")
-                        print(f"{word}: File: {speechFile} End (s): {i['end']}")
-                        words.remove(word)
-                        word_data.append(i)
-                        break
+    for i in wordlist:
+        for x, input_word in enumerate(words):
+            if i.word == input_word:
+                print(f"{input_word}: File: {i.file} Start (s): {i.start}")
+                print(f"{input_word}: File: {i.file} End (s): {i.end}")
+                words[x] = i.uuid
+                word_data.append(i)
+                break
             
     return word_data
             
 
-def speech_recog_and_search(fileIn):
+def speechRecogAndSearch(fileIn):
     datalist = []
     SetLogLevel(0)
 
@@ -116,30 +141,32 @@ def speech_recog_and_search(fileIn):
     print(fileIn)
     for entry in datalist:
         if "result" in entry:
-            for stuff in entry["result"]:
-                stuff.update({"file": fileIn})
+            for word in entry["result"]:
+                word.update({"file": fileIn})
+    words = wordsFromList(datalist)
     if args.writejson:
-        with open(os.path.splitext(fileIn)[0] + ".json", "w") as outputJson:
-            outputJson.write(json.dumps(datalist))
-    found_words = search(datalist, fileIn)
+        with open(os.path.splitext(fileIn)[0] + ".json", "w") as output_json:
+            output_json.write(json.dumps(datalist))
+
+    
+    found_words = search(words)
     return found_words
 
 
 for file in args.files:
     print(f"Searching for words in {file}\nThis may take a while, please be patient...")
     if args.readjson:
-        with open(file, "r") as inputJson:
-            found_words = search(json.loads(inputJson.read()), file)
+        with open(file, "r") as input_json:
+            input_words = wordsFromList(json.loads(input_json.read()))
+            found_words = search(input_words)
 
     else:
-        found_words = speech_recog_and_search(file)
+        found_words = speechRecogAndSearch(file)
     total_found_words.extend(found_words)
 
 
 if total_found_words == []:
     print(f"{sys.argv[0]} did not find any words!", file=sys.stderr)
 else:
-    total_found_words.sort(key=lambda i: words_immutable.index(i["word"]))
-    print(total_found_words)
-    cut_and_paste(total_found_words)
-
+    total_found_words.sort(key=lambda i: words.index(i.uuid))
+    cutAndPaste(total_found_words)
