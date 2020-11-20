@@ -30,14 +30,6 @@ import argparse
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 import uuid
 
-parser = argparse.ArgumentParser(description="A script to put words in other people's mouths", usage="%(prog)s [OPTIONS] [WORDFILE] [FILES...]")
-group = parser.add_mutually_exclusive_group()
-
-group.add_argument("-w", "--writejson", help="Write transcript to a JSON file", action="store_true")
-group.add_argument("-r", "--readjson", help="Read from JSON transcript", action="store_true")
-parser.add_argument("wordfile", help="Text file of words to search for")
-parser.add_argument("files", nargs="+", help="MPEG4 files (all with the same fps!) or JSON transcripts to search through")
-args = parser.parse_args()
 words = []
 words_immutable = []
 total_found_words = []
@@ -55,13 +47,13 @@ class Word:
 
 
     # TODO method to write json from object data
+def compileWords():
+    with open(args.searchfile, "r") as wordfilestring:
+        for line in wordfilestring:
+            for word in line.split():
+                words.append(word)
+                words_immutable.append(word)
 
-        
-with open(args.wordfile, "r") as wordfilestring:
-    for line in wordfilestring:
-        for word in line.split():
-            words.append(word)
-            words_immutable.append(word)
 
 def wordsFromList(datalist):
     export_list = []
@@ -72,7 +64,6 @@ def wordsFromList(datalist):
                 export_list.append(word)
 
     return export_list
-
 
 
 def cutAndPaste(datalist):
@@ -89,8 +80,6 @@ def cutAndPaste(datalist):
         clip.close()
 
         
-
-
 def search(wordlist):
     word_data = []
     for i in wordlist:
@@ -105,7 +94,7 @@ def search(wordlist):
     return word_data
             
 
-def speechRecogAndSearch(fileIn):
+def speechRecog(fileIn):
     datalist = []
     SetLogLevel(0)
 
@@ -138,34 +127,67 @@ def speechRecogAndSearch(fileIn):
     finalResult = rec.FinalResult()
     datalist.append(json.loads(finalResult))
     print(fileIn)
+
     for entry in datalist:
         if "result" in entry:
             for word in entry["result"]:
                 word.update({"file": fileIn})
+
     words = wordsFromList(datalist)
-    if args.writejson:
-        with open(os.path.splitext(fileIn)[0] + ".json", "w") as output_json:
-            output_json.write(json.dumps(datalist))
 
-    
-    found_words = search(words)
-    return found_words
+    with open(os.path.splitext(fileIn)[0] + ".json", "w") as output_json:
+        output_json.write(json.dumps(datalist))
+
+    return words
 
 
-for file in args.files:
-    print(f"Searching for words in {file}\nThis may take a while, please be patient...")
-    if args.readjson:
+def checkAndSort(words_in):
+    if total_found_words == []:
+        print(f"{sys.argv[0]} did not find any words!", file=sys.stderr)
+    else:
+        total_found_words.sort(key=lambda i: words.index(i.uuid))
+ 
+
+def write(args):
+    if args.searchfile:
+        compileWords()
+
+    for file in args.files:
+        transcript = speechRecog(file)
+        if args.searchfile:
+            found_words = search(transcript)
+            total_found_words.extend(found_words)
+
+    checkAndSort(total_found_words)
+    if args.searchfile:
+        cutAndPaste(total_found_words)
+
+
+def read(args):
+    compileWords()
+    for file in args.files:
         with open(file, "r") as input_json:
             input_words = wordsFromList(json.loads(input_json.read()))
-            found_words = search(input_words)
 
-    else:
-        found_words = speechRecogAndSearch(file)
-    total_found_words.extend(found_words)
+        found_words = search(input_words)
+        total_found_words.extend(found_words)
 
-
-if total_found_words == []:
-    print(f"{sys.argv[0]} did not find any words!", file=sys.stderr)
-else:
-    total_found_words.sort(key=lambda i: words.index(i.uuid))
+    checkAndSort(total_found_words)
     cutAndPaste(total_found_words)
+
+
+parser = argparse.ArgumentParser(description="A script to put words in other people's mouths")
+subparsers = parser.add_subparsers(title="subcommands", help="Run '<command> -h' for specific help")
+parser_w = subparsers.add_parser("write", help="Write transcript to JSON file(s)")
+parser_w.add_argument("-s", "--searchfile", nargs=1, help="Search through a text file and create a video output of concatenated words")
+parser_w.add_argument("files", nargs="+", help="MPEG4 files to transcribe/search")
+parser_w.set_defaults(func=write)
+parser_r = subparsers.add_parser("read", help="Read JSON transcript(s)")
+parser_r.add_argument("searchfile", help="Text file of words to search for")
+parser_r.add_argument("files", nargs="+", help="JSON transcripts to search through")
+parser_r.set_defaults(func=read)
+args = parser.parse_args()
+try:
+    args.func(args)
+except AttributeError:
+    args = parser.parse_args(["-h"])
