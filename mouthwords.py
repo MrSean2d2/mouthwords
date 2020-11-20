@@ -19,7 +19,6 @@
 
 # TODO Add a check for framerate problems or somehow support differing framerates in videos (Issue #1)
 
-# TODO Fix list ordering to allow for duplicate words (Issue #2)
 
 from vosk import Model, KaldiRecognizer, SetLogLevel
 import sys
