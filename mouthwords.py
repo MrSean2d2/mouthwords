@@ -158,8 +158,8 @@ def write(args):
             found_words = search(transcript)
             total_found_words.extend(found_words)
 
-    checkAndSort(total_found_words)
     if args.searchfile:
+        checkAndSort(total_found_words)
         cutAndPaste(total_found_words)
 
 
