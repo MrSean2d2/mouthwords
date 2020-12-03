@@ -8,7 +8,7 @@ and unzip it yourself — I haven't included one in the repository because the s
 
 ---
 
-# Dependencies
+## Dependencies
 - A working python3 environment
 - [Vosk API](https://github.com/alphacep/vosk-api) and the model you want to use for transcription, see <https://alphacephei.com/vosk/models>
 - [MoviePy](https://github.com/Zulko/moviepy)
@@ -19,7 +19,26 @@ but if you are on Linux® be sure to check if there is a package in your distro'
 
 ---
 
-# Usage
+## Installation
+Work in progress; there is currently no real way to install this project other than cloning this
+Git repository, installing dependencies, and using the script in the working directory. At some point
+I will package this properly, but for now the necessary steps are below:
+
+```sh
+git clone https://github.com/MrSean2d2/mouthwords.git
+
+cd mouthwords
+
+wget http://alphacephei.com/vosk/models/vosk-model-small-en-us-0.4.zip
+
+unzip vosk-model-small-en-us-0.4.zip
+
+mv vosk-model-small-en-us-0.4.zip model
+```
+You can then run the script with `./mouthwords` in the current directory or
+add the file to your $PATH
+
+## Usage
 
 ```
 
