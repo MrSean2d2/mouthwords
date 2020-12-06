@@ -6,7 +6,6 @@ with any language you have a model for, you can even train your own if you know 
 Currently Vosk looks for the model in the same directory as the script when you run it, and you have to download
 and unzip it yourself — I haven't included one in the repository because the script is model independant.
 
----
 
 # Dependencies
 - A working python3 environment
@@ -17,7 +16,6 @@ and unzip it yourself — I haven't included one in the repository because the s
 Both these projects are available on [PyPI](https://pypi.org/), and installable via `pip`
 but if you are on Linux® be sure to check if there is a package in your distro's repositories.
 
----
 
 # Usage
 
