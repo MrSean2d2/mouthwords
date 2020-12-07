@@ -4,9 +4,9 @@
 *.json
 
 # Environment folders
-speechenv/
 .vscode/
 __pycache__/
+.ycm_extra_conf.py
 
 # Model folder (indpendent of the code)
 model/
