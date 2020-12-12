@@ -8,3 +8,4 @@ vosk = "*"
 moviepy = "*"
 
 [dev-packages]
+jedi = "*"

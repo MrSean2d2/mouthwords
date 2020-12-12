@@ -35,7 +35,6 @@ words_immutable = []
 total_found_words = []
 
 class Word:
-   
     def __init__(self, conf, start, end, word, fileIn):
         self.conf = conf
         self.start = start
@@ -47,7 +46,7 @@ class Word:
 
 
     # TODO method to write json from object data
-def compileWords():
+def compile_words():
     with open(args.searchfile, "r") as wordfilestring:
         for line in wordfilestring:
             for word in line.split():
@@ -55,7 +54,7 @@ def compileWords():
                 words_immutable.append(word)
 
 
-def wordsFromList(datalist):
+def words_from_list(datalist):
     export_list = []
     for data in datalist:
         if "result" in data:
@@ -66,7 +65,7 @@ def wordsFromList(datalist):
     return export_list
 
 
-def cutAndPaste(datalist):
+def cut_and_paste(datalist):
     clips = []
     for data in datalist:
         start = data.start - 0.01
@@ -79,7 +78,7 @@ def cutAndPaste(datalist):
     for clip in clips:
         clip.close()
 
-        
+
 def search(wordlist):
     word_data = []
     for i in wordlist:
@@ -90,11 +89,10 @@ def search(wordlist):
                 words[x] = i.uuid
                 word_data.append(i)
                 break
-            
     return word_data
-            
 
-def speechRecog(fileIn):
+
+def speech_recog(fileIn):
     datalist = []
     SetLogLevel(0)
 
@@ -113,9 +111,7 @@ def speechRecog(fileIn):
                                     stdout=subprocess.PIPE)
     except IndexError:
         raise
-    
 
-    
     while True:
         data = process.stdout.read(4000)
         if len(data) == 0:
@@ -133,7 +129,7 @@ def speechRecog(fileIn):
             for word in entry["result"]:
                 word.update({"file": fileIn})
 
-    words = wordsFromList(datalist)
+    words = words_from_list(datalist)
 
     with open(os.path.splitext(fileIn)[0] + ".json", "w") as output_json:
         output_json.write(json.dumps(datalist))
@@ -141,53 +137,54 @@ def speechRecog(fileIn):
     return words
 
 
-def checkAndSort(words_in):
+def check_and_sort(words_in):
     if total_found_words == []:
         print(f"{sys.argv[0]} did not find any words!", file=sys.stderr)
     else:
         total_found_words.sort(key=lambda i: words.index(i.uuid))
- 
+
 
 def write(args):
     if args.searchfile:
-        compileWords()
+        compile_words()
 
     for file in args.files:
-        transcript = speechRecog(file)
+        transcript = speech_recog(file)
         if args.searchfile:
             found_words = search(transcript)
             total_found_words.extend(found_words)
 
     if args.searchfile:
-        checkAndSort(total_found_words)
-        cutAndPaste(total_found_words)
+        check_and_sort(total_found_words)
+        cut_and_paste(total_found_words)
 
 
 def read(args):
-    compileWords()
+    compile_words()
     for file in args.files:
         with open(file, "r") as input_json:
-            input_words = wordsFromList(json.loads(input_json.read()))
+            input_words = words_from_list(json.loads(input_json.read()))
 
         found_words = search(input_words)
         total_found_words.extend(found_words)
 
-    checkAndSort(total_found_words)
-    cutAndPaste(total_found_words)
+    check_and_sort(total_found_words)
+    cut_and_paste(total_found_words)
 
 
-parser = argparse.ArgumentParser(description="A script to put words in other people's mouths")
-subparsers = parser.add_subparsers(title="subcommands", help="Run '<command> -h' for specific help")
-parser_w = subparsers.add_parser("write", help="Write transcript to JSON file(s)")
-parser_w.add_argument("-s", "--searchfile", nargs=1, help="Search through a text file and create a video output of concatenated words")
-parser_w.add_argument("files", nargs="+", help="MPEG4 files to transcribe/search")
-parser_w.set_defaults(func=write)
-parser_r = subparsers.add_parser("read", help="Read JSON transcript(s)")
-parser_r.add_argument("searchfile", help="Text file of words to search for")
-parser_r.add_argument("files", nargs="+", help="JSON transcripts to search through")
-parser_r.set_defaults(func=read)
-args = parser.parse_args()
-try:
-    args.func(args)
-except AttributeError:
-    args = parser.parse_args(["-h"])
+if __name__ == "__main":
+    parser = argparse.ArgumentParser(description="A script to put words in other people's mouths")
+    subparsers = parser.add_subparsers(title="subcommands", help="Run '<command> -h' for specific help")
+    parser_w = subparsers.add_parser("write", help="Write transcript to JSON file(s)")
+    parser_w.add_argument("-s", "--searchfile", nargs=1, help="Search through a text file and create a video output of concatenated words")
+    parser_w.add_argument("files", nargs="+", help="MPEG4 files to transcribe/search")
+    parser_w.set_defaults(func=write)
+    parser_r = subparsers.add_parser("read", help="Read JSON transcript(s)")
+    parser_r.add_argument("searchfile", help="Text file of words to search for")
+    parser_r.add_argument("files", nargs="+", help="JSON transcripts to search through")
+    parser_r.set_defaults(func=read)
+    args = parser.parse_args()
+    try:
+        args.func(args)
+    except AttributeError:
+        args = parser.parse_args(["-h"])
