@@ -46,7 +46,7 @@ class Word:
 
 
     # TODO method to write json from object data
-def compile_words():
+def compile_words(args):
     with open(args.searchfile, "r") as wordfilestring:
         for line in wordfilestring:
             for word in line.split():
@@ -146,7 +146,7 @@ def check_and_sort(words_in):
 
 def write(args):
     if args.searchfile:
-        compile_words()
+        compile_words(args)
 
     for file in args.files:
         transcript = speech_recog(file)
@@ -160,7 +160,7 @@ def write(args):
 
 
 def read(args):
-    compile_words()
+    compile_words(args)
     for file in args.files:
         with open(file, "r") as input_json:
             input_words = words_from_list(json.loads(input_json.read()))
@@ -172,7 +172,7 @@ def read(args):
     cut_and_paste(total_found_words)
 
 
-if __name__ == "__main":
+def main():
     parser = argparse.ArgumentParser(description="A script to put words in other people's mouths")
     subparsers = parser.add_subparsers(title="subcommands", help="Run '<command> -h' for specific help")
     parser_w = subparsers.add_parser("write", help="Write transcript to JSON file(s)")
@@ -188,3 +188,6 @@ if __name__ == "__main":
         args.func(args)
     except AttributeError:
         args = parser.parse_args(["-h"])
+
+if __name__ == "__main__":
+    main()
