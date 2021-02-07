@@ -3,7 +3,7 @@
 
 # mouthwords - a script to put words in other people's mouths
 
-# Copyright © 2020 Sean Reitsma
+# Copyright © 2021 Sean Reitsma
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -44,12 +44,11 @@ class Word:
         self.uuid = uuid.uuid4()
 
 
-
     # TODO method to write json from object data
 def compile_words(args):
     with open(args.searchfile, "r") as wordfilestring:
         for line in wordfilestring:
-            for word in line.split():
+            for word in line.lower().split():
                 words.append(word)
                 words_immutable.append(word)
 
@@ -81,15 +80,14 @@ def cut_and_paste(datalist):
 
 def search(wordlist):
     word_data = []
-    for i in wordlist:
-        for x, input_word in enumerate(words):
-            if i.word == input_word:
-                print(f"{input_word}: File: {i.file} Start (s): {i.start}")
-                print(f"{input_word}: File: {i.file} End (s): {i.end}")
-                words[x] = i.uuid
-                word_data.append(i)
+    for x, input_word in enumerate(words):
+        for word in wordlist:
+            if input_word == word.word:
+                found_word = Word(word.conf, word.start, word.end, word.word, word.file)
+                words[x] = found_word.uuid
+                word_data.append(found_word)
                 break
-    return word_data
+            return word_data
 
 
 def speech_recog(fileIn):
@@ -161,13 +159,14 @@ def write(args):
 
 def read(args):
     compile_words(args)
+    print(words)
     for file in args.files:
         with open(file, "r") as input_json:
             input_words = words_from_list(json.loads(input_json.read()))
 
         found_words = search(input_words)
         total_found_words.extend(found_words)
-
+    print(words)
     check_and_sort(total_found_words)
     cut_and_paste(total_found_words)
 
@@ -186,7 +185,8 @@ def main():
     args = parser.parse_args()
     try:
         args.func(args)
-    except AttributeError:
+    except AttributeError as e:
+        print(e)
         args = parser.parse_args(["-h"])
 
 if __name__ == "__main__":
