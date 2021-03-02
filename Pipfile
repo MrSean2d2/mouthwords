@@ -6,6 +6,6 @@ name = "pypi"
 [packages]
 vosk = "*"
 moviepy = "*"
+jedi = "*"
 
 [dev-packages]
-jedi = "*"
