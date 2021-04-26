@@ -28,7 +28,6 @@ import subprocess
 import json
 import argparse
 from moviepy.editor import VideoFileClip, concatenate_videoclips
-import uuid
 
 words = []
 words_immutable = []
@@ -41,7 +40,6 @@ class Word:
         self.end = end
         self.word = word
         self.file = fileIn
-        self.uuid = uuid.uuid4()
 
 
     # TODO method to write json from object data
@@ -67,10 +65,11 @@ def words_from_list(datalist):
 def cut_and_paste(datalist):
     clips = []
     for data in datalist:
-        start = data.start - 0.01
-        end = data.end + 0.01
-        clip = VideoFileClip(data.file).subclip(start, end)
-        clips.append(clip)
+        if type(data) == Word:
+            start = data.start - 0.01
+            end = data.end + 0.01
+            clip = VideoFileClip(data.file).subclip(start, end)
+            clips.append(clip)
 
     final_clip = concatenate_videoclips(clips)
     final_clip.write_videofile(f"output.mp4", audio=True)
@@ -84,10 +83,10 @@ def search(wordlist):
         for word in wordlist:
             if input_word == word.word:
                 found_word = Word(word.conf, word.start, word.end, word.word, word.file)
-                words[x] = found_word.uuid
-                word_data.append(found_word)
+                words[x] = found_word
+                # word_data.append(found_word)
                 break
-            return word_data
+    return words
 
 
 def speech_recog(fileIn):
@@ -135,13 +134,6 @@ def speech_recog(fileIn):
     return words
 
 
-def check_and_sort(words_in):
-    if total_found_words == []:
-        print(f"{sys.argv[0]} did not find any words!", file=sys.stderr)
-    else:
-        total_found_words.sort(key=lambda i: words.index(i.uuid))
-
-
 def write(args):
     if args.searchfile:
         compile_words(args)
@@ -153,7 +145,6 @@ def write(args):
             total_found_words.extend(found_words)
 
     if args.searchfile:
-        check_and_sort(total_found_words)
         cut_and_paste(total_found_words)
 
 
@@ -167,7 +158,6 @@ def read(args):
         found_words = search(input_words)
         total_found_words.extend(found_words)
     print(words)
-    check_and_sort(total_found_words)
     cut_and_paste(total_found_words)
 
 
