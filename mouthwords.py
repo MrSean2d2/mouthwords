@@ -43,8 +43,8 @@ class Word:
 
 
     # TODO method to write json from object data
-def compile_words(args):
-    with open(args.searchfile, "r") as wordfilestring:
+def compile_words(searchfile):
+    with open(searchfile, "r") as wordfilestring:
         for line in wordfilestring:
             for word in line.lower().split():
                 words.append(word)
@@ -136,7 +136,7 @@ def speech_recog(fileIn):
 
 def write(args):
     if args.searchfile:
-        compile_words(args)
+        compile_words(args.searchfile)
 
     for file in args.files:
         transcript = speech_recog(file)
@@ -165,8 +165,8 @@ def main():
     parser = argparse.ArgumentParser(description="A script to put words in other people's mouths")
     subparsers = parser.add_subparsers(title="subcommands", help="Run '<command> -h' for specific help")
     parser_w = subparsers.add_parser("write", help="Write transcript to JSON file(s)")
-    parser_w.add_argument("-s", "--searchfile", nargs=1, help="Search through a text file and create a video output of concatenated words")
-    parser_w.add_argument("files", nargs="+", help="MPEG4 files to transcribe/search")
+    parser_w.add_argument("-s", "--searchfile", help="(Optional) Text file of words to search for")
+    parser_w.add_argument("files", nargs="+", help="Video files to transcribe/search")
     parser_w.set_defaults(func=write)
     parser_r = subparsers.add_parser("read", help="Read JSON transcript(s)")
     parser_r.add_argument("searchfile", help="Text file of words to search for")
